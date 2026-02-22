@@ -34,19 +34,6 @@
             font-size: 32px;
         }
         
-        .setup-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .setup-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
         .form-group {
             margin: 20px 0;
         }
@@ -95,68 +82,6 @@
             transform: translateY(0);
         }
         
-        .link-list {
-            margin-top: 30px;
-        }
-        
-        .link-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-        
-        .link-item:hover {
-            transform: translateX(5px);
-        }
-        
-        .link-info {
-            flex: 1;
-        }
-        
-        .link-name {
-            font-weight: bold;
-            color: #333;
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-        
-        .link-url {
-            color: #667eea;
-            font-size: 14px;
-        }
-        
-        .link-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 14px;
-            width: auto;
-        }
-        
-        .btn-delete {
-            background: #dc3545;
-        }
-        
-        .btn-delete:hover {
-            background: #c82333;
-        }
-        
-        .btn-copy {
-            background: #28a745;
-        }
-        
-        .btn-copy:hover {
-            background: #218838;
-        }
-        
         .status {
             padding: 15px;
             border-radius: 8px;
@@ -181,80 +106,11 @@
             color: #0c5460;
             display: block;
         }
-        
-        .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            width: 90%;
-        }
-        
-        .modal-content h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .modal-content textarea {
-            width: 100%;
-            min-height: 150px;
-            margin-bottom: 20px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .modal-buttons button {
-            flex: 1;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔗 链接管理器</h1>
-        
-        <div class="setup-section">
-            <h3>⚙️ GitHub设置</h3>
-            <div class="form-group">
-                <label>GitHub用户名：</label>
-                <input type="text" id="githubUsername" placeholder="例如：caldson">
-            </div>
-            <div class="form-group">
-                <label>仓库名称：</label>
-                <input type="text" id="repoName" placeholder="例如：linkmanage">
-            </div>
-            <div class="form-group">
-                <label>GitHub Token（需要repo权限）：</label>
-                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
-                <p class="help-text">在GitHub设置 -> Developer settings -> Personal access tokens中创建</p>
-            </div>
-            <button onclick="saveSettings()">💾 保存设置</button>
-        </div>
         
         <div class="form-group">
             <label>链接名称：</label>
@@ -274,58 +130,55 @@
         <button onclick="createLink()">✨ 创建链接</button>
         
         <div id="status" class="status"></div>
-        
-        <div class="link-list">
-            <h2>📋 已创建的链接</h2>
-            <div id="linksContainer">
-            </div>
-        </div>
-    </div>
-    
-    <div id="codeModal" class="modal">
-        <div class="modal-content">
-            <h3>📄 页面代码</h3>
-            <textarea id="pageCode" readonly></textarea>
-            <div class="modal-buttons">
-                <button onclick="copyCode()">📋 复制代码</button>
-                <button onclick="closeModal()">❌ 关闭</button>
-            </div>
-        </div>
     </div>
     
     <script>
-        let links = JSON.parse(localStorage.getItem('links') || '[]');
-        let settings = JSON.parse(localStorage.getItem('githubSettings') || '{}');
+        const ENCRYPTION_KEY = 'linkmanage-secret-key-2024';
         
-        window.onload = function() {
-            loadSettings();
-            renderLinks();
+        function encrypt(text) {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
+                result += String.fromCharCode(charCode);
+            }
+            return btoa(result);
+        }
+        
+        function decrypt(encryptedText) {
+            try {
+                const decoded = atob(encryptedText);
+                let result = '';
+                for (let i = 0; i < decoded.length; i++) {
+                    const charCode = decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
+                    result += String.fromCharCode(charCode);
+                }
+                return result;
+            } catch (e) {
+                return '';
+            }
+        }
+        
+        const ENCRYPTED_TOKEN = 'CwEeNAMSXlAhLkQZLjQoNwRXXANLaEgCSFBZWjYTNxQ5UFciRhkTOw==';
+        
+        let settings = {
+            username: 'Caldson',
+            repo: 'linkmanage',
+            token: ''
         };
         
-        function loadSettings() {
-            if (settings.username) {
-                settings.username = "Caldson";
-            }
-            if (settings.repo) {
-                settings.repo = "linkmanage";
-            }
-            if (settings.token) {
-                document.getElementById('githubToken').value = settings.token;
+        function loadEncryptedToken() {
+            settings.token = decrypt(ENCRYPTED_TOKEN);
+            if (!settings.token) {
+                showStatus('Token解密失败，请检查ENCRYPTED_TOKEN', 'error');
             }
         }
         
-        function saveSettings() {
-            settings = {
-                username: document.getElementById('githubUsername').value,
-                repo: document.getElementById('repoName').value,
-                token: document.getElementById('githubToken').value
-            };
-            localStorage.setItem('githubSettings', JSON.stringify(settings));
-            showStatus('设置已保存！', 'success');
-        }
+        window.onload = function() {
+            loadEncryptedToken();
+        };
         
         function generatePageCode(linkName, targetUrl, pageTitle) {
-            return `<!DOCTYPE html>
+            const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -378,18 +231,20 @@
         <a href="${targetUrl}">点击这里跳转</a>
     </div>
     <script>
-        setTimeout(function() {
-            window.location.href = '${targetUrl}';
-        }, 1000);
-    </script>
+        window.location.href = '${targetUrl}';
+    <\/script>
 </body>
 </html>`;
+            return html;
         }
         
         async function createLink() {
+            console.log('createLink 函数被调用');
             const linkName = document.getElementById('linkName').value.trim();
             const targetUrl = document.getElementById('targetUrl').value.trim();
             const pageTitle = document.getElementById('pageTitle').value.trim();
+            
+            console.log('输入值:', { linkName, targetUrl, pageTitle });
             
             if (!linkName || !targetUrl) {
                 showStatus('请填写链接名称和目标URL！', 'error');
@@ -401,98 +256,65 @@
                 return;
             }
             
+            console.log('开始生成页面代码...');
             const pageCode = generatePageCode(linkName, targetUrl, pageTitle);
             const fileName = `${linkName}.html`;
             const apiUrl = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}`;
             
+            console.log('API URL:', apiUrl);
+            
+            let bodyData = {
+                message: `Create link page for ${linkName}`,
+                content: btoa(unescape(encodeURIComponent(pageCode)))
+            };
+            
             try {
+                console.log('检查文件是否存在...');
+                const checkResponse = await fetch(apiUrl, {
+                    headers: {
+                        'Authorization': `token ${settings.token}`
+                    }
+                });
+                
+                console.log('检查响应:', checkResponse.status);
+                
+                const isUpdate = checkResponse.ok;
+                
+                if (isUpdate) {
+                    const existingFile = await checkResponse.json();
+                    bodyData.sha = existingFile.sha;
+                    bodyData.message = `Update link page for ${linkName}`;
+                }
+                
+                console.log('创建/更新文件...');
                 const response = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `token ${settings.token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        message: `Create link page for ${linkName}`,
-                        content: btoa(unescape(encodeURIComponent(pageCode)))
-                    })
+                    body: JSON.stringify(bodyData)
                 });
+                
+                console.log('创建响应:', response.status);
                 
                 if (response.ok) {
                     const linkUrl = `https://${settings.username}.github.io/${settings.repo}/${linkName}`;
-                    
-                    const newLink = {
-                        id: Date.now(),
-                        name: linkName,
-                        url: linkUrl,
-                        targetUrl: targetUrl,
-                        pageTitle: pageTitle || linkName,
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    links.push(newLink);
-                    localStorage.setItem('links', JSON.stringify(links));
-                    
-                    renderLinks();
                     
                     document.getElementById('linkName').value = '';
                     document.getElementById('targetUrl').value = '';
                     document.getElementById('pageTitle').value = '';
                     
-                    showStatus(`链接创建成功！访问地址：${linkUrl}`, 'success');
+                    const action = isUpdate ? '更新' : '创建';
+                    showStatus(`链接${action}成功！访问地址：${linkUrl}`, 'success');
                 } else {
                     const error = await response.json();
                     showStatus(`创建失败：${error.message}`, 'error');
                 }
             } catch (error) {
+                console.error('错误:', error);
                 showStatus(`创建失败：${error.message}`, 'error');
             }
-        }
-        
-        function renderLinks() {
-            const container = document.getElementById('linksContainer');
-            container.innerHTML = '';
-            
-            if (links.length === 0) {
-                container.innerHTML = '<p style="color: #999; text-align: center;">还没有创建任何链接</p>';
-                return;
-            }
-            
-            links.forEach(link => {
-                const linkItem = document.createElement('div');
-                linkItem.className = 'link-item';
-                linkItem.innerHTML = `
-                    <div class="link-info">
-                        <div class="link-name">${link.name}</div>
-                        <div class="link-url">${link.url}</div>
-                        <div style="font-size: 12px; color: #999; margin-top: 5px;">
-                            目标：${link.targetUrl}
-                        </div>
-                    </div>
-                    <div class="link-actions">
-                        <button class="btn-small btn-copy" onclick="copyLink('${link.url}')">📋</button>
-                        <button class="btn-small btn-delete" onclick="deleteLink(${link.id})">🗑️</button>
-                    </div>
-                `;
-                container.appendChild(linkItem);
-            });
-        }
-        
-        function deleteLink(id) {
-            if (confirm('确定要删除这个链接吗？')) {
-                links = links.filter(link => link.id !== id);
-                localStorage.setItem('links', JSON.stringify(links));
-                renderLinks();
-                showStatus('链接已删除', 'info');
-            }
-        }
-        
-        function copyLink(url) {
-            navigator.clipboard.writeText(url).then(() => {
-                showStatus('链接已复制到剪贴板！', 'success');
-            }).catch(() => {
-                showStatus('复制失败，请手动复制', 'error');
-            });
         }
         
         function showStatus(message, type) {
@@ -503,17 +325,6 @@
             setTimeout(() => {
                 status.className = 'status';
             }, 5000);
-        }
-        
-        function copyCode() {
-            const code = document.getElementById('pageCode');
-            code.select();
-            document.execCommand('copy');
-            showStatus('代码已复制！', 'success');
-        }
-        
-        function closeModal() {
-            document.getElementById('codeModal').classList.remove('active');
         }
     </script>
 </body>

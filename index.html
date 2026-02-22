@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>链接管理器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+        
+        .setup-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .setup-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin: 20px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .link-list {
+            margin-top: 30px;
+        }
+        
+        .link-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+        
+        .link-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .link-info {
+            flex: 1;
+        }
+        
+        .link-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .link-url {
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .link-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        
+        .btn-copy {
+            background: #28a745;
+        }
+        
+        .btn-copy:hover {
+            background: #218838;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .modal-content textarea {
+            width: 100%;
+            min-height: 150px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 链接管理器</h1>
+        
+        <div class="setup-section">
+            <h3>⚙️ GitHub设置</h3>
+            <div class="form-group">
+                <label>GitHub用户名：</label>
+                <input type="text" id="githubUsername" placeholder="例如：caldson">
+            </div>
+            <div class="form-group">
+                <label>仓库名称：</label>
+                <input type="text" id="repoName" placeholder="例如：linkmanage">
+            </div>
+            <div class="form-group">
+                <label>GitHub Token（需要repo权限）：</label>
+                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
+                <p class="help-text">在GitHub设置 -> Developer settings -> Personal access tokens中创建</p>
+            </div>
+            <button onclick="saveSettings()">💾 保存设置</button>
+        </div>
+        
+        <div class="form-group">
+            <label>链接名称：</label>
+            <input type="text" id="linkName" placeholder="输入链接名称（例如：mylink）">
+        </div>
+        
+        <div class="form-group">
+            <label>目标URL：</label>
+            <input type="url" id="targetUrl" placeholder="输入目标网址（例如：https://example.com）">
+        </div>
+        
+        <div class="form-group">
+            <label>页面标题：</label>
+            <input type="text" id="pageTitle" placeholder="输入页面标题">
+        </div>
+        
+        <button onclick="createLink()">✨ 创建链接</button>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="link-list">
+            <h2>📋 已创建的链接</h2>
+            <div id="linksContainer">
+            </div>
+        </div>
+    </div>
+    
+    <div id="codeModal" class="modal">
+        <div class="modal-content">
+            <h3>📄 页面代码</h3>
+            <textarea id="pageCode" readonly></textarea>
+            <div class="modal-buttons">
+                <button onclick="copyCode()">📋 复制代码</button>
+                <button onclick="closeModal()">❌ 关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let links = JSON.parse(localStorage.getItem('links') || '[]');
+        let settings = JSON.parse(localStorage.getItem('githubSettings') || '{}');
+        
+        window.onload = function() {
+            loadSettings();
+            renderLinks();
+        };
+        
+        function loadSettings() {
+            if (settings.username) {
+                settings.username = "Caldson";
+            }
+            if (settings.repo) {
+                settings.repo = "linkmanage";
+            }
+            if (settings.token) {
+                document.getElementById('githubToken').value = settings.token;
+            }
+        }
+        
+        function saveSettings() {
+            settings = {
+                username: document.getElementById('githubUsername').value,
+                repo: document.getElementById('repoName').value,
+                token: document.getElementById('githubToken').value
+            };
+            localStorage.setItem('githubSettings', JSON.stringify(settings));
+            showStatus('设置已保存！', 'success');
+        }
+        
+        function generatePageCode(linkName, targetUrl, pageTitle) {
+            return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle || linkName}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        a {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        a:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>${pageTitle || linkName}</h1>
+        <p>正在跳转到目标页面...</p>
+        <a href="${targetUrl}">点击这里跳转</a>
+    </div>
+    <script>
+        setTimeout(function() {
+            window.location.href = '${targetUrl}';
+        }, 1000);
+    </script>
+</body>
+</html>`;
+        }
+        
+        async function createLink() {
+            const linkName = document.getElementById('linkName').value.trim();
+            const targetUrl = document.getElementById('targetUrl').value.trim();
+            const pageTitle = document.getElementById('pageTitle').value.trim();
+            
+            if (!linkName || !targetUrl) {
+                showStatus('请填写链接名称和目标URL！', 'error');
+                return;
+            }
+            
+            if (!settings.username || !settings.repo || !settings.token) {
+                showStatus('请先配置GitHub设置！', 'error');
+                return;
+            }
+            
+            const pageCode = generatePageCode(linkName, targetUrl, pageTitle);
+            const fileName = `${linkName}.html`;
+            const apiUrl = `https://api.github.com/repos/${settings.username}/${settings.repo}/contents/${fileName}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${settings.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Create link page for ${linkName}`,
+                        content: btoa(unescape(encodeURIComponent(pageCode)))
+                    })
+                });
+                
+                if (response.ok) {
+                    const linkUrl = `https://${settings.username}.github.io/${settings.repo}/${linkName}`;
+                    
+                    const newLink = {
+                        id: Date.now(),
+                        name: linkName,
+                        url: linkUrl,
+                        targetUrl: targetUrl,
+                        pageTitle: pageTitle || linkName,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    links.push(newLink);
+                    localStorage.setItem('links', JSON.stringify(links));
+                    
+                    renderLinks();
+                    
+                    document.getElementById('linkName').value = '';
+                    document.getElementById('targetUrl').value = '';
+                    document.getElementById('pageTitle').value = '';
+                    
+                    showStatus(`链接创建成功！访问地址：${linkUrl}`, 'success');
+                } else {
+                    const error = await response.json();
+                    showStatus(`创建失败：${error.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`创建失败：${error.message}`, 'error');
+            }
+        }
+        
+        function renderLinks() {
+            const container = document.getElementById('linksContainer');
+            container.innerHTML = '';
+            
+            if (links.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">还没有创建任何链接</p>';
+                return;
+            }
+            
+            links.forEach(link => {
+                const linkItem = document.createElement('div');
+                linkItem.className = 'link-item';
+                linkItem.innerHTML = `
+                    <div class="link-info">
+                        <div class="link-name">${link.name}</div>
+                        <div class="link-url">${link.url}</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                            目标：${link.targetUrl}
+                        </div>
+                    </div>
+                    <div class="link-actions">
+                        <button class="btn-small btn-copy" onclick="copyLink('${link.url}')">📋</button>
+                        <button class="btn-small btn-delete" onclick="deleteLink(${link.id})">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(linkItem);
+            });
+        }
+        
+        function deleteLink(id) {
+            if (confirm('确定要删除这个链接吗？')) {
+                links = links.filter(link => link.id !== id);
+                localStorage.setItem('links', JSON.stringify(links));
+                renderLinks();
+                showStatus('链接已删除', 'info');
+            }
+        }
+        
+        function copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showStatus('链接已复制到剪贴板！', 'success');
+            }).catch(() => {
+                showStatus('复制失败，请手动复制', 'error');
+            });
+        }
+        
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            
+            setTimeout(() => {
+                status.className = 'status';
+            }, 5000);
+        }
+        
+        function copyCode() {
+            const code = document.getElementById('pageCode');
+            code.select();
+            document.execCommand('copy');
+            showStatus('代码已复制！', 'success');
+        }
+        
+        function closeModal() {
+            document.getElementById('codeModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
